@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.androidchat"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.androidchat"
@@ -47,4 +47,5 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.firebaseui:firebase-ui-auth:7.2.0")
 }
