@@ -1,99 +1,105 @@
 package com.example.androidchat;
-import android.app.PendingIntent;
+
 import android.content.Intent;
-import android.content.IntentSender;
 import android.os.Bundle;
+import android.text.format.DateFormat;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
+import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.FirebaseAuth;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity {
-    private static final int SIGN_IN_REQUEST_CODE = 111;
+
+    private EditText inputMessage;
+    private ListView listOfMessages;
+    private MessageAdapter messageAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if(FirebaseAuth.getInstance().getCurrentUser() == null) {
-            // Start sign in/sign up activity
-            createSignInIntent();
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            // El usuario ya está autenticado, puedes redirigir a otra actividad o realizar otras acciones
+            Toast.makeText(this, "Usuario ya autenticado: " + currentUser.getEmail(), Toast.LENGTH_SHORT).show();
         } else {
-            // User is already signed in. Therefore, display
-            // a welcome Toast
-            Toast.makeText(this,
-                            "Welcome " + FirebaseAuth.getInstance()
-                                    .getCurrentUser()
-                                    .getDisplayName(),
-                            Toast.LENGTH_LONG)
-                    .show();
-            // Load chat room contents
-            displayChatMessages();
+            // El usuario no está autenticado, inicia el flujo de inicio de sesión
+            startSignIn();
         }
+
+        inputMessage = findViewById(R.id.input);
+        listOfMessages = findViewById(R.id.list_of_messages);
+
+        // Configurar adaptador para la lista de mensajes
+        messageAdapter = new MessageAdapter(this, new ArrayList<>());
+        listOfMessages.setAdapter(messageAdapter);
+        findViewById(R.id.fab).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMessage();
+            }
+        });
+
     }
 
-    public void createSignInIntent() {
-        // Choose authentication providers
-        List<AuthUI.IdpConfig> providers = Arrays.asList(
-                new AuthUI.IdpConfig.EmailBuilder().build());
-
-        // Create and launch sign-in intent
-        Intent signInIntent = AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setAvailableProviders(providers)
-                .build();
-
-        // Fix for the PendingIntent issue
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                this,
-                0,
-                signInIntent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+    private void startSignIn() {
+        // Crear un ActivityResultLauncher para gestionar el resultado del inicio de sesión
+        ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
+                new FirebaseAuthUIActivityResultContract(),
+                result -> {
+                    handleSignInResult(result);
+                }
         );
 
-        try {
-            // Start the intent using the fixed PendingIntent
-            startIntentSenderForResult(
-                    pendingIntent.getIntentSender(),
-                    SIGN_IN_REQUEST_CODE,
-                    null,
-                    0,
-                    0,
-                    0
-            );
-        } catch (IntentSender.SendIntentException e) {
-            e.printStackTrace();
+        // Llamar a la función para iniciar el flujo de inicio de sesión desde FirebaseUIActivity
+        FirebaseUIActivity.createSignInIntent(signInLauncher);
+    }
+
+    private void handleSignInResult(FirebaseAuthUIAuthenticationResult result) {
+        // Manejar el resultado del inicio de sesión aquí
+        // Puedes agregar más lógica según tus necesidades
+        if (result.getResultCode() == RESULT_OK) {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            Toast.makeText(this, "Inicio de sesión exitoso para " + user.getEmail(), Toast.LENGTH_SHORT).show();
+            // Aquí puedes realizar acciones adicionales después del inicio de sesión exitoso
+        } else {
+            // El inicio de sesión ha fallado o el usuario canceló el proceso
+            // Puedes manejar estos casos según tus necesidades
+            Toast.makeText(this, "Inicio de sesión cancelado o fallido", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void displayChatMessages() {
-        // Implement the logic to display chat messages
-    }
+    private void sendMessage() {
+        String messageText = inputMessage.getText().toString().trim();
+        String messageUser = FirebaseAuth.getInstance().getCurrentUser().getEmail();
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode,
-                                    Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == SIGN_IN_REQUEST_CODE) {
-            if(resultCode == RESULT_OK) {
-                Toast.makeText(this,
-                                "Successfully signed in. Welcome!",
-                                Toast.LENGTH_LONG)
-                        .show();
-                displayChatMessages();
-            } else {
-                Toast.makeText(this,
-                                "We couldn't sign you in. Please try again later.",
-                                Toast.LENGTH_LONG)
-                        .show();
-                // Close the app
-                finish();
-            }
+        if (!messageText.isEmpty()) {
+            // Crear un objeto ChatMessage con la información del mensaje
+            ChatMessage chatMessage = new ChatMessage(messageText, messageUser);
+
+            // Limpiar el cuadro de texto
+            inputMessage.setText("");
+
+            // Agregar el mensaje a la lista y notificar al adaptador
+            messageAdapter.add(chatMessage);
+            messageAdapter.notifyDataSetChanged();
+        } else {
+            Toast.makeText(this, "El mensaje no puede estar vacío", Toast.LENGTH_SHORT).show();
         }
     }
+
 }
