@@ -102,7 +102,6 @@ public class MainActivity extends AppCompatActivity {
             inputMessage.setText("");
 
 
-
             FirebaseDatabase database = FirebaseDatabase.getInstance("https://chat-android-74785-default-rtdb.europe-west1.firebasedatabase.app");
             DatabaseReference myRef = database.getReference("message");
 
@@ -112,9 +111,11 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
+
+                    Toast.makeText(MainActivity.this, "Funciona", Toast.LENGTH_SHORT).show();
                     // Agregar el mensaje a la lista y notificar al adaptador
-                    messageAdapter.add(chatMessage);
-                    messageAdapter.notifyDataSetChanged();
+                    //messageAdapter.add(chatMessage);
+                    //messageAdapter.notifyDataSetChanged();
 
                 }
 
