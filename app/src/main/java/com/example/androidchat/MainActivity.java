@@ -111,11 +111,11 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-
                     Toast.makeText(MainActivity.this, "Funciona", Toast.LENGTH_SHORT).show();
                     // Agregar el mensaje a la lista y notificar al adaptador
-                    //messageAdapter.add(chatMessage);
-                    //messageAdapter.notifyDataSetChanged();
+                    ChatMessage recibido = dataSnapshot.getValue(ChatMessage.class);
+                    messageAdapter.add(recibido);
+                    messageAdapter.notifyDataSetChanged();
 
                 }
 
