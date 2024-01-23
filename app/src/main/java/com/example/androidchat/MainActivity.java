@@ -101,27 +101,28 @@ public class MainActivity extends AppCompatActivity {
             // Limpiar el cuadro de texto
             inputMessage.setText("");
 
-
             FirebaseDatabase database = FirebaseDatabase.getInstance("https://chat-android-74785-default-rtdb.europe-west1.firebasedatabase.app");
-            DatabaseReference myRef = database.getReference("message");
+            DatabaseReference myRef = database.getReference("messages").push(); // Utilizar push() para generar un identificador único
 
             myRef.setValue(chatMessage);
 
             myRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
                     Toast.makeText(MainActivity.this, "Funciona", Toast.LENGTH_SHORT).show();
-                    // Agregar el mensaje a la lista y notificar al adaptador
+
+                    // Obtener el mensaje recién guardado con su identificador único
                     ChatMessage recibido = dataSnapshot.getValue(ChatMessage.class);
+
+                    // Agregar el mensaje a la lista y notificar al adaptador
                     messageAdapter.add(recibido);
                     messageAdapter.notifyDataSetChanged();
-
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-
+                    // Manejar errores de lectura de la base de datos
+                    Toast.makeText(MainActivity.this, "Error al leer la base de datos", Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -129,5 +130,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "El mensaje no puede estar vacío", Toast.LENGTH_SHORT).show();
         }
     }
+
 
 }
