@@ -78,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
 
                 // Notificar al adaptador que los datos han cambiado
                 messageAdapter.notifyDataSetChanged();
+
+                listOfMessages.smoothScrollToPosition(messageAdapter.getCount() - 1);
             }
 
             @Override
