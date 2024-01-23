@@ -60,6 +60,31 @@ public class MainActivity extends AppCompatActivity {
                 sendMessage();
             }
         });
+        FirebaseDatabase database = FirebaseDatabase.getInstance("https://chat-android-74785-default-rtdb.europe-west1.firebasedatabase.app");
+        DatabaseReference messagesRef = database.getReference("messages");
+
+        // Agregar un listener para detectar cambios en los mensajes
+        messagesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // Limpiar el adaptador antes de agregar mensajes actualizados
+                messageAdapter.clear();
+
+                // Iterar a través de los mensajes y agregarlos al adaptador
+                for (DataSnapshot messageSnapshot : dataSnapshot.getChildren()) {
+                    ChatMessage chatMessage = messageSnapshot.getValue(ChatMessage.class);
+                    messageAdapter.add(chatMessage);
+                }
+
+                // Notificar al adaptador que los datos han cambiado
+                messageAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Manejar errores de base de datos si es necesario
+            }
+        });
 
     }
 
@@ -101,30 +126,11 @@ public class MainActivity extends AppCompatActivity {
             // Limpiar el cuadro de texto
             inputMessage.setText("");
 
-            FirebaseDatabase database = FirebaseDatabase.getInstance("https://chat-android-74785-default-rtdb.europe-west1.firebasedatabase.app");
-            DatabaseReference myRef = database.getReference("messages").push(); // Utilizar push() para generar un identificador único
+            // Obtener una referencia única utilizando push()
+            DatabaseReference messagesRef = FirebaseDatabase.getInstance("https://chat-android-74785-default-rtdb.europe-west1.firebasedatabase.app").getReference("messages").push();
 
-            myRef.setValue(chatMessage);
-
-            myRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    Toast.makeText(MainActivity.this, "Funciona", Toast.LENGTH_SHORT).show();
-
-                    // Obtener el mensaje recién guardado con su identificador único
-                    ChatMessage recibido = dataSnapshot.getValue(ChatMessage.class);
-
-                    // Agregar el mensaje a la lista y notificar al adaptador
-                    messageAdapter.add(recibido);
-                    messageAdapter.notifyDataSetChanged();
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    // Manejar errores de lectura de la base de datos
-                    Toast.makeText(MainActivity.this, "Error al leer la base de datos", Toast.LENGTH_SHORT).show();
-                }
-            });
+            // Guardar el mensaje en la base de datos con una clave única
+            messagesRef.setValue(chatMessage);
 
         } else {
             Toast.makeText(this, "El mensaje no puede estar vacío", Toast.LENGTH_SHORT).show();
